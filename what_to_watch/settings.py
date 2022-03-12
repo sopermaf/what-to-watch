@@ -29,8 +29,11 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+PROJECT_APPS = [
+    "movies.apps.MoviesConfig",
+]
 
-INSTALLED_APPS = [
+INSTALLED_APPS = PROJECT_APPS + [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -38,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
