@@ -13,6 +13,17 @@ header {
     text-align: center;
 }
 
+.container2 {
+    position: absolute;
+    top: 120px;
+    right: 220px;
+}
+
+p {
+    clear: right;
+}
+
+
 .container {
 	width: 1280px;
 	margin-left: auto;
