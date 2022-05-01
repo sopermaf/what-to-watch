@@ -12,6 +12,8 @@ repos:
     - id: check-merge-conflict
     - id: check-shebang-scripts-are-executable
     - id: pretty-format-json
+      args:
+        - "--autofix"
     - id: check-added-large-files
     - id: no-commit-to-branch
       args: [--branch, main]
