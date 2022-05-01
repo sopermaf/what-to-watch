@@ -32,6 +32,10 @@ class WatchItem(models.Model):
     def __str__(self) -> str:
         return f"WatchItem({self.imdb_id=}, {self.average_rating=})"
 
+    @property
+    def imdb_link(self) -> str:
+        return f"https://www.imdb.com/title/{self.imdb_id}/"
+
     @classmethod
     def create_watch_item(cls, watch_item):
         # create the watch item without save
