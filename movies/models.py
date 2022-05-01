@@ -1,5 +1,6 @@
 from django.db import models
 from marshmallow import Schema, fields, pre_load
+from pyparsing import empty
 
 
 class Genre(models.Model):
@@ -23,10 +24,10 @@ class WatchItem(models.Model):
     title_type = models.ForeignKey(TitleType, on_delete=models.CASCADE)
     primary_title = models.CharField(max_length=100)
     original_title = models.CharField(max_length=100)
-    is_adult = models.BooleanField()
+    is_adult = models.BooleanField(default=False)
     start_year = models.PositiveIntegerField(db_index=True, null=True)
-    end_year = models.PositiveIntegerField(null=True)
-    runtime_minutes = models.IntegerField(null=True)
+    end_year = models.PositiveIntegerField(null=True, blank=True)
+    runtime_minutes = models.IntegerField(null=True, blank=True)
     genres = models.ManyToManyField(Genre, related_name="watch_items")
 
     def __str__(self) -> str:
