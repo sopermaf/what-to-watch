@@ -46,7 +46,7 @@ p {
 
 form {
     width: 1000px;
-   
+
     padding-left: 30%;
 }
 
@@ -85,9 +85,9 @@ input[type="submit"] {
     box-shadow: 5px 5px 5px rgba(0, 0, 0, .40);
     position: absolute;
     left: 50% ;
-    
-    
-} 
+
+
+}
 
 input[type="submit"]:hover,
 input[type="submit"]:focus {
