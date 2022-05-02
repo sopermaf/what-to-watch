@@ -13,18 +13,14 @@ header {
     text-align: center;
 }
 
-img {
+.image1 {
    max-width: 11%;
    max-height: 11%;
    position: absolute;
-   right: 210px;
+   right: 355px;
    top: 115px;
 }
 
-.cat {
-    height: 30px;
-    width: 30px;
-}
 
 p {
     clear: right;
@@ -103,4 +99,12 @@ footer{
     position: absolute;
     bottom: 5px;
     left: 50%;
+}
+
+
+.image2 {
+    position: relative;
+    width: 99.88px;
+    height: 100.12px;
+    transform: rotate(-7.66deg);
 }
