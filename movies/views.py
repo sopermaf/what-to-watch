@@ -1,6 +1,7 @@
 from django.core.exceptions import BadRequest
 from django.shortcuts import render
 
+from movies.forms import FilterMovie
 from movies.models import WatchItem
 
 
@@ -13,10 +14,13 @@ def index(request):
         raise BadRequest("minimum_rating must be numeric")
 
     # TODO: this will be ineffecient
-    # filter by rating if applicable
-    movies = WatchItem.objects.order_by("?")
+    movie = None
     if minimum_rating:
-        movies = movies.filter(average_rating__gte=minimum_rating)
+        movies = WatchItem.objects.order_by("?").filter(
+            average_rating__gte=minimum_rating
+        )
+        if movies:
+            movie = movies[0]
 
-    context = {"movie": movies[0]}
+    context = {"movie": movie, "form": FilterMovie()}
     return render(request, "movies/index.html", context)

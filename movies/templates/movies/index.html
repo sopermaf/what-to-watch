@@ -4,13 +4,21 @@
 
 <h1>What to Watch</h1>
 
-<div class="recommendation">
-    <h2> <a href="{{ movie.imdb_link }}"> {{ movie.primary_title }}  </a> </h2>
-    <ul>
+<form action="/" method="get">
+    {{ form }}
+    <input type="submit" value="Submit">
+</form>
 
-        <li> {{ movie.average_rating }} </li>
-        <li> {{ movie.start_year }} </li>
-    </ul>
-</div>
+{% if movie %}
+    <div class="recommendation">
+        <h2> <a href="{{ movie.imdb_link }}"> {{ movie.primary_title }}  </a> </h2>
+        <ul>
+
+            <li> {{ movie.average_rating }} </li>
+            <li> {{ movie.start_year }} </li>
+        </ul>
+    </div>
+{% endif %}
+
 </body>
 </html>
