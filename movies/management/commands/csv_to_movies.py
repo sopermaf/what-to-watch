@@ -6,8 +6,40 @@ import csv
 import pandas as pd
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from marshmallow import Schema, fields, pre_load
 
 from movies.models import WatchItem
+
+
+class WatchItemSchema(Schema):
+    imdb_id = fields.String(data_key="tconst")
+    average_rating = fields.Float(data_key="averageRating")
+    num_votes = fields.Number(data_key="numVotes")
+    title_type = fields.String(data_key="titleType")
+    primary_title = fields.String(data_key="primaryTitle")
+    original_title = fields.String(data_key="originalTitle")
+    is_adult = fields.Boolean(data_key="isAdult")
+    start_year = fields.Number(data_key="startYear", allow_none=True)
+    end_year = fields.Number(data_key="endYear", allow_none=True)
+    runtime_minutes = fields.Number(data_key="runtimeMinutes", allow_none=True)
+    genres = fields.List(fields.String)
+
+    @pre_load
+    def clean_values(self, data, **_):
+        # remove `\N` for null
+        for k, v in data.items():
+            if not v or v == r"\N":
+                data[k] = None
+
+        # split genre
+        try:
+            genres = data["genres"].split(",")
+        except AttributeError:
+            genres = []
+        finally:
+            data["genres"] = genres if any(genres) else []
+
+        return data
 
 
 class Command(BaseCommand):
@@ -39,12 +71,12 @@ class Command(BaseCommand):
     def import_into_csv(self, csv_file: str) -> None:
         with open(csv_file) as fp:
             for line in csv.DictReader(fp):
-                try:
-                    WatchItem.create_watch_item(line)
-                except Exception:
-                    self.stdout.write(f"Error for {line['primaryTitle']=}")
-                else:
-                    self.stdout.write(f"Success! - {line['primaryTitle']=}")
+                # try:
+                WatchItem.create_watch_item(WatchItemSchema().load(line))
+                # except Exception as exc:
+                #     self.stderr.write(self.style.ERROR(exc))
+                # else:
+                self.stdout.write(f"Success! - {line['primaryTitle']}")
 
 
 def load_imdb_csv(filename) -> pd.DataFrame:
