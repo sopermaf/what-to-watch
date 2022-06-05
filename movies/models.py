@@ -1,6 +1,5 @@
 from django.db import models
 from marshmallow import Schema, fields, pre_load
-from pyparsing import empty
 
 
 class Genre(models.Model):
