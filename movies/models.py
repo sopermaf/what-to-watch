@@ -48,6 +48,7 @@ class WatchItem(models.Model):
         )
 
         # TODO: how to handle updating?
+        # try to get the imdb_id, create if not?
         new_watch_item = WatchItem(**watch_item, title_type=title_type)
         new_watch_item.save()
 
