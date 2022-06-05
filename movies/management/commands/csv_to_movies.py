@@ -1,9 +1,13 @@
 """
 Convert movies
 """
+import csv
+
 import pandas as pd
 from django.conf import settings
 from django.core.management.base import BaseCommand
+
+from movies.models import WatchItem
 
 
 class Command(BaseCommand):
@@ -28,12 +32,19 @@ class Command(BaseCommand):
         # imdb_df.to_csv("example.csv")
 
         self.stdout.write("Importing data to db")
+        self.import_into_csv(settings.BASE_DIR / "example.csv")
 
         self.stdout.write(self.style.SUCCESS("DONE!"))
 
-
-def import_into_csv():
-    pass
+    def import_into_csv(self, csv_file: str) -> None:
+        with open(csv_file) as fp:
+            for line in csv.DictReader(fp):
+                try:
+                    WatchItem.create_watch_item(line)
+                except Exception:
+                    self.stdout.write(f"Error for {line['primaryTitle']=}")
+                else:
+                    self.stdout.write(f"Success! - {line['primaryTitle']=}")
 
 
 def load_imdb_csv(filename) -> pd.DataFrame:
