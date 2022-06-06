@@ -1,5 +1,5 @@
 """
-Convert movies
+Downloads data from imdb and loads files
 """
 import csv
 
@@ -44,38 +44,51 @@ class WatchItemSchema(Schema):
 
 class Command(BaseCommand):
     help = "Import imdb data to DB"
+    required_files = ("title.basics.tsv", "title.ratings.tsv")
 
     def add_arguments(self, parser):
-        parser.add_argument("files", nargs="+", type=str)
+        # parser.add_argument("files", nargs="+", type=str)
+
+        # Named (optional) arguments
+        parser.add_argument(
+            "--download",
+            action="store_true",
+            help="Delete poll instead of closing it",
+        )
+
+        parser.add_argument(
+            "--remove-files",
+            action="store_true",
+            help="Delete poll instead of closing it",
+        )
 
     def handle(self, *args, **options):
-        # TODO: download new files
-        self.stdout.write("Downloading new data")
+        if options["download"]:
+            self.stdout.write("Downloading new data")
 
-        # TODO: import data into DB
-        for file in options["files"]:
-            with open(settings.BASE_DIR / file):
-                pass
+        # TODO: add file removal step
+        files = [settings.BASE_DIR / file for file in self.required_files]
+        # TODO: replace usage with TemporaryNamedFile
+        temp_file = str(settings.BASE_DIR / "example.csv")
 
-        self.stdout.write("Transforming data")
-        # # NOTE: "title.basics.tsv", "title.ratings.tsv" required
-        # imdb_df = title_csv_to_dfs(*options["files"])
-        # imdb_df = filter_imdb_df(imdb_df)
-        # imdb_df.to_csv("example.csv")
+        self.stdout.write(f"Transforming data: {files}")
+        imdb_df = title_csv_to_dfs(*files)
+        imdb_df = filter_imdb_df(imdb_df)
+        imdb_df.to_csv(temp_file)
 
         self.stdout.write("Importing data to db")
-        self.import_into_csv(settings.BASE_DIR / "example.csv")
+        self.import_into_csv(temp_file)
+
+        if options["remove-files"]:
+            # TODO: remove created temporary files
+            pass
 
         self.stdout.write(self.style.SUCCESS("DONE!"))
 
     def import_into_csv(self, csv_file: str) -> None:
         with open(csv_file) as fp:
             for line in csv.DictReader(fp):
-                # try:
                 WatchItem.create_watch_item(WatchItemSchema().load(line))
-                # except Exception as exc:
-                #     self.stderr.write(self.style.ERROR(exc))
-                # else:
                 self.stdout.write(f"Success! - {line['primaryTitle']}")
 
 
