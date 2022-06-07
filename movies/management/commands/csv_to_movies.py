@@ -2,11 +2,15 @@
 Downloads data from imdb and loads files
 """
 import csv
+from tempfile import TemporaryFile
+from typing import Iterator
 
 import pandas as pd
+import requests
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from marshmallow import Schema, fields, pre_load
+from tqdm import tqdm
 
 from movies.models import WatchItem
 
@@ -44,12 +48,9 @@ class WatchItemSchema(Schema):
 
 class Command(BaseCommand):
     help = "Import imdb data to DB"
-    required_files = ("title.basics.tsv", "title.ratings.tsv")
+    required_files = ("title.ratings.tsv.gz", "title.basics.tsv.gz")
 
     def add_arguments(self, parser):
-        # parser.add_argument("files", nargs="+", type=str)
-
-        # Named (optional) arguments
         parser.add_argument(
             "--download",
             action="store_true",
@@ -62,38 +63,48 @@ class Command(BaseCommand):
             help="Delete poll instead of closing it",
         )
 
+    @staticmethod
+    def download_imdb_file(filename):
+        path = settings.BASE_DIR / filename
+        with open(path, "wb+") as fp:
+            resp = requests.get(f"https://datasets.imdbws.com/{filename}", stream=True)
+            resp.raise_for_status()
+            for i in tqdm(
+                resp.iter_content(chunk_size=128),
+                total=int(resp.headers["Content-Length"]) / 128,
+            ):
+                fp.write(i)
+        return path
+
     def handle(self, *args, **options):
+        files = [settings.BASE_DIR / f for f in self.required_files]
+        # download the files from imdb data source
         if options["download"]:
             self.stdout.write("Downloading new data")
-
-        # TODO: add file removal step
-        files = [settings.BASE_DIR / file for file in self.required_files]
-        # TODO: replace usage with TemporaryNamedFile
-        temp_file = str(settings.BASE_DIR / "example.csv")
+            files = list(map(self.download_imdb_file, self.required_files))
 
         self.stdout.write(f"Transforming data: {files}")
         imdb_df = title_csv_to_dfs(*files)
         imdb_df = filter_imdb_df(imdb_df)
-        imdb_df.to_csv(temp_file)
 
-        self.stdout.write("Importing data to db")
-        self.import_into_csv(temp_file)
+        # temporary CSV file between dataframe to database
+        with TemporaryFile(mode="w+") as fp:
+            imdb_df.to_csv(fp)
 
-        if options["remove-files"]:
-            # TODO: remove created temporary files
-            pass
+            self.stdout.write("Importing data to db")
+            fp.seek(0)
+            self.import_into_csv(fp, imdb_df.shape[0])
 
         self.stdout.write(self.style.SUCCESS("DONE!"))
 
-    def import_into_csv(self, csv_file: str) -> None:
-        with open(csv_file) as fp:
-            for line in csv.DictReader(fp):
-                WatchItem.create_watch_item(WatchItemSchema().load(line))
-                self.stdout.write(f"Success! - {line['primaryTitle']}")
+    def import_into_csv(self, csv_file, total: int) -> None:
+        for line in tqdm(csv.DictReader(csv_file), total=total):
+            WatchItem.create_watch_item(WatchItemSchema().load(line))
+            # self.stdout.write(f"Success! - {line['primaryTitle']}")
 
 
 def load_imdb_csv(filename) -> pd.DataFrame:
-    return pd.read_csv(filename, sep="\t", index_col="tconst")
+    return pd.read_csv(filename, sep="\t", index_col="tconst", compression="gzip")
 
 
 def title_csv_to_dfs(*filenames):
@@ -113,7 +124,7 @@ def filter_imdb_df(imdb_df):
     imdb_df = imdb_df.loc[
         (imdb_df["isAdult"] == 0)
         & (imdb_df["titleType"] == "movie")
-        & (imdb_df["numVotes"] >= 5000)
+        & (imdb_df["numVotes"] >= 50000)
         & (imdb_df["startYear"] >= 1980)
     ]
     return imdb_df

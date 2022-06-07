@@ -8,6 +8,8 @@ authors = ["Ferdia Soper Mac Cafraidh <sopermaf@tcd.ie>"]
 python = "^3.10"
 Django = "3.2.12"
 marshmallow = "^3.15.0"
+requests = "^2.27.1"
+tqdm = "^4.64.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
