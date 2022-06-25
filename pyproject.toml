@@ -6,7 +6,7 @@ authors = ["Ferdia Soper Mac Cafraidh <sopermaf@tcd.ie>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-Django = "3.2.12"
+Django = "3.2.13"
 marshmallow = "^3.15.0"
 requests = "^2.27.1"
 tqdm = "^4.64.0"
