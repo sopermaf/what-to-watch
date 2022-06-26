@@ -2,8 +2,8 @@
 Downloads data from imdb and loads files
 """
 import csv
+from pathlib import Path
 from tempfile import TemporaryFile
-from typing import Iterator
 
 import pandas as pd
 import requests
@@ -30,18 +30,10 @@ class WatchItemSchema(Schema):
 
     @pre_load
     def clean_values(self, data, **_):
-        # remove `\N` for null
-        for k, v in data.items():
-            if not v or v == r"\N":
-                data[k] = None
+        data.update({k: None for k, v in data.items() if not v or v == r"\N"})
 
-        # split genre
-        try:
-            genres = data["genres"].split(",")
-        except AttributeError:
-            genres = []
-        finally:
-            data["genres"] = genres if any(genres) else []
+        genres = (data["genres"] or "").split(",")
+        data["genres"] = genres if any(genres) else []
 
         return data
 
@@ -64,16 +56,21 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def download_imdb_file(filename):
+    def download_imdb_file(filename, chunk_size=128) -> Path:
+        """
+        Downloads the imdb file to root directory
+        """
         path = settings.BASE_DIR / filename
         with open(path, "wb+") as fp:
             resp = requests.get(f"https://datasets.imdbws.com/{filename}", stream=True)
             resp.raise_for_status()
-            for i in tqdm(
-                resp.iter_content(chunk_size=128),
-                total=int(resp.headers["Content-Length"]) / 128,
-            ):
-                fp.write(i)
+
+            content_chunks = resp.iter_content(chunk_size=chunk_size)
+            num_chunks = int(resp.headers["Content-Length"]) / chunk_size
+
+            for chunk in tqdm(content_chunks, total=num_chunks):
+                fp.write(chunk)
+
         return path
 
     def handle(self, *args, **options):
@@ -97,10 +94,10 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("DONE!"))
 
-    def import_into_csv(self, csv_file, total: int) -> None:
+    @staticmethod
+    def import_into_csv(csv_file, total: int) -> None:
         for line in tqdm(csv.DictReader(csv_file), total=total):
             WatchItem.create_watch_item(WatchItemSchema().load(line))
-            # self.stdout.write(f"Success! - {line['primaryTitle']}")
 
 
 def load_imdb_csv(filename) -> pd.DataFrame:
