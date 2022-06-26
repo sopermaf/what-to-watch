@@ -46,13 +46,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--download",
             action="store_true",
-            help="Delete poll instead of closing it",
-        )
-
-        parser.add_argument(
-            "--remove-files",
-            action="store_true",
-            help="Delete poll instead of closing it",
+            help="Download fresh files from imdb",
         )
 
     @staticmethod
