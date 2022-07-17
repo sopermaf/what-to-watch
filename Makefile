@@ -11,3 +11,6 @@ runserver: # run the development server for testing
 
 unit-test: # launch unit tests
 	pytest
+
+heroku-requirements:
+	poetry export --without-hashes > requirements.txt
